@@ -1,5 +1,6 @@
 const orderModel = require("../models/order.js");
 const prodModel = require("../models/product.js");
+const mail = require("../utils/ack.js");
 
 
 function getExpDate(date) {
@@ -103,6 +104,93 @@ const createOrder = async(req, res) => {
             product.stock = parseInt(product.stock) - parseInt(req.body.quantity);
             await product.save();
             await newOrder.save();
+            const html = `<!DOCTYPE html>
+                            <html lang="en">
+                            <head>
+                                <meta charset="UTF-8">
+                                <meta name="viewport" content="width=device-width, initial-scale=1.0">
+                                <title>Order Information</title>
+                                <style>
+                                    body {
+                                        font-family: Arial, sans-serif;
+                                        margin: 0;
+                                        padding: 0;
+                                    }
+
+                                    .container {
+                                        max-width: 800px;
+                                        margin: 0 auto;
+                                        padding: 20px;
+                                    }
+
+                                    h1, h2, h3 {
+                                        text-align: center;
+                                    }
+
+                                    .order-info {
+                                        margin-top: 30px;
+                                    }
+
+                                    .order-details {
+                                        background-color: #f2f2f2;
+                                        padding: 20px;
+                                        border-radius: 5px;
+                                        box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+                                    }
+
+                                    .order-details h3 {
+                                        margin-top: 0;
+                                    }
+
+                                    p {
+                                        margin: 10px 0;
+                                    }
+
+                                    strong {
+                                        font-weight: bold;
+                                    }
+                                </style>
+                            </head>
+                            <body>
+                                <div class="container">
+                                    <h1>Frosty Creations</h1>
+                                    <h2>Order Information</h2>
+                                    <div class="order-info">
+                                        <div class="order-details">
+                                            <h3>Order Details</h3>
+                                            <p><strong>Product Name:</strong> <span id="product-name"></span></p>
+                                            <p><strong>Category:</strong> <span id="category"></span></p>
+                                            <p><strong>Quantity:</strong> <span id="quantity"></span></p>
+                                            <p><strong>Price:</strong> <span id="price"></span></p>
+                                            <p><strong>Expire Date:</strong> <span id="order-date"></span></p>
+                                            <p><strong>Address:</strong> <span id="address"></span></p>
+                                            <p><strong>Order Status:</strong> <span id="order-status"></span></p>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <script>
+                                    const orderData = {
+                                        productName: ${product.prodname},
+                                        category: ${product.category},
+                                        quantity: ${req.body.quantity},
+                                        price: ${finalPrice},
+                                        date: ${getExpDate(new Date())},
+                                        address: ${req.body.loc},
+                                        orderStatus: "Pending"
+                                    };
+
+                                    document.getElementById("product-name").textContent = orderData.productName;
+                                    document.getElementById("category").textContent = orderData.category;
+                                    document.getElementById("quantity").textContent = orderData.quantity;
+                                    document.getElementById("price").textContent = orderData.price;
+                                    document.getElementById("order-date").textContent = orderData.date;
+                                    document.getElementById("address").textContent = orderData.address;
+                                    document.getElementById("order-status").textContent = orderData.orderStatus;
+                                </script>
+                            </body>
+                            </html>`;
+            await mail("Order confirmed", html, process.env.ADMIN_MAIL)
             res.status(200).json({"msg": "Order Placed, go to the orders section to track your order"})
         }
 
