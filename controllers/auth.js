@@ -8,7 +8,9 @@ const { validateHash, hashData } = require("../utils/hashing");
 const veryifyEmail = async(req, res) => {
     try {
         const email = req.body.email;
+        console.log(email)
         const code = Math.floor(Math.random() * 90000) + 10000;
+        await codeModel.findOneAndDelete({email});
         let status = sendCode(email, code);
         new codeModel({ email, code }).save();
         if (status) {
@@ -31,7 +33,6 @@ const verifyCode = async(req, res) => {
     try {
         const body = req.body;
         const codeObj = await codeModel.findOne({email: body.email});
-        console.log(codeObj)
         if(codeObj != null){
             const status = await validateHash(
               codeObj.code,
@@ -45,22 +46,19 @@ const verifyCode = async(req, res) => {
                 const user = await userModel.findOne({email:body.email});
                 if(user === null){
                     new userModel({ email: body.email }).save();
-                    res.status(200).json({ status: "register", msg: "Code verified" });
+                    const token = generateToken(body.email);
+                    res.status(200).json({ status: "register", msg: "Code verified", token: token });
                 }else{
-                    if (user.password != null){
-                        res
-                          .status(200)
-                          .json({ status: "login", msg: "Code verified" });
-                    }else{
-                        new userModel({ email: body.email }).save();
-                        res
-                          .status(200)
-                          .json({ status: "register", msg: "Code verified" });
+                    const token = generateToken(body.email);
+                    res
+                        .status(200)
+                        .json({ status: "register", msg: "Code verified", token: token });
                     }
                 }
+            }else{
+                res.status(404).json({ msg: "Code cannot be empty" });
             }
-        }
-    } catch (error) {
+        } catch (error) {
         console.log(error)
         res.status(500).json({"msg": "Something went Wrong"})
     }

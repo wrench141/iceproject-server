@@ -9,6 +9,8 @@ const learnRouter = require("./routes/learn");
 const cartRouter = require("./routes/cart");
 const productRouter = require("./routes/product");
 const orderRouter = require("./routes/order");
+const contactRouter = require("./routes/contact");
+const shopRouter = require("./routes/shop");
 
 const app = express();
 const PORT = process.env.PORT || 4000
@@ -28,6 +30,8 @@ app.use("/recipes", learnRouter);
 app.use("/cart", cartRouter)
 app.use("/products", productRouter);
 app.use("/orders", orderRouter);
+app.use("/contact", contactRouter);
+app.use("/shops", shopRouter);
 
 mongoose.connect(process.env.DB).then(() => {
     app.listen(PORT, () => {
