@@ -55,7 +55,11 @@ const getOrderDetails = async(req, res) => {
         if (!orders) {
           res.status(404).json({ msg: "No Order Found" });
         } else {
-          res.status(200).json({ msg: orders });
+          const allOrders = orders.map(async(order) => {return {
+            order: order, 
+            product: await prodModel.findById(order.prodid)
+          }})
+          res.status(200).json({ msg: allOrders });
         }
     } catch (error) {
         res.status(500).json({ msg: "server error" });
@@ -85,15 +89,19 @@ const createOrder = async(req, res) => {
         if(!product){
             res.status(404).json({"msg": "Product not found"})
         }else{
-            let finalPrice = parseInt(product.price);
+            let finalPrice =
+              parseInt(product.price) * parseInt(req.body.quantity);
             if(parseInt(product.discount) > 0){
                 finalPrice =
-                  (parseInt(product.price) * parseInt(product.discount)) / 100;   
+                  ((parseInt(product.price) *
+                    parseInt(req.body.quantity)) *
+                    parseInt(product.discount)) /
+                  100;   
             }
             let newOrder = new orderModel({
               userid,
               prodid,
-              price: finalPrice,
+              price: finalPrice + 200,
               quantity: req.body.quantity,
               pickupLoc: req.body.loc,
               phone: req.body.phone,

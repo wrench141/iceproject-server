@@ -11,6 +11,8 @@ const productRouter = require("./routes/product");
 const orderRouter = require("./routes/order");
 const contactRouter = require("./routes/contact");
 const shopRouter = require("./routes/shop");
+const { validateToken } = require("./utils/jwtToken");
+const userModel = require("./models/user");
 
 const app = express();
 const PORT = process.env.PORT || 4000
@@ -32,6 +34,30 @@ app.use("/products", productRouter);
 app.use("/orders", orderRouter);
 app.use("/contact", contactRouter);
 app.use("/shops", shopRouter);
+
+app.get("/isAdmin", async(req, res, next) => {
+    try{
+        const email = validateToken(req.headers.token);
+        if(email != null){
+            const user = await userModel.findOne({email});
+            if(user != null){
+                if(user.isAdmin == true){
+                  res.status(200).json({"msg" : true})
+                }else{
+                  res.status(403).json({"msg" : false})
+                }
+            }else{
+                res.status(404).json({"msg": false})
+            }
+        }else{
+            res.status(404).json({"msg": false})
+        }
+    }catch(error){
+        console.log(error)
+        res.status(500).json({"msg": false})
+    }
+  }
+)
 
 mongoose.connect(process.env.DB).then(() => {
     app.listen(PORT, () => {
