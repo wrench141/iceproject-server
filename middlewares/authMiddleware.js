@@ -3,7 +3,8 @@ const {validateToken} = require("../utils/jwtToken")
 
 const authMiddleware = async(req, res, next) => {
     try {
-        const email = validateToken(req.headers.token);
+        const email = validateToken(req.headers.token); 
+        console.log(email)
         if(email != null){
             const user = await userModel.findOne({email});
             if(user != null){

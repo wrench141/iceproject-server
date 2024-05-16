@@ -31,6 +31,7 @@ const getOrders = async (req, res) => {
       res.status(200).json({ msg: data });
     }
   } catch (error) {
+    console.log(error)
     res.status(500).json({ msg: "server error" });
   }
 };
@@ -51,17 +52,19 @@ const getAllOrders = async(req, res) => {
 const getOrderDetails = async(req, res) => {
     try {
         const orderid = req.params.orderid;
-        const orders = await orderModel.findById(orderid);
-        if (!orders) {
+        const order = await orderModel.findById(orderid);
+        if (!order) {
           res.status(404).json({ msg: "No Order Found" });
         } else {
-          const allOrders = orders.map(async(order) => {return {
-            order: order, 
-            product: await prodModel.findById(order.prodid)
-          }})
-          res.status(200).json({ msg: allOrders });
+          var data = {
+            order: order,
+            product: null
+          };
+          data.product = await prodModel.findById(order.prodid);
+          res.status(200).json({ data: data });
         }
     } catch (error) {
+      console.log(error)
         res.status(500).json({ msg: "server error" });
     }
 }
@@ -211,7 +214,15 @@ const createOrder = async(req, res) => {
 
 const updateOrder = async(req, res) => {
     try {
-        
+        const order = await orderModel.findById(req.params.id);
+        console.log(order)
+        if(!order){
+          res.status(404).json({msg: "Order not found"})
+        }else{
+          order.status = req.body.status;
+          await order.save();
+          res.status(200).json({msg: "order updated"})
+        }
     } catch (error) {
         res.status(500).json({ msg: "server error" });
     }
